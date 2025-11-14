@@ -3,7 +3,7 @@ from web3 import Web3
 import json
 import requests
 
-st.title("🎲 Ethereum Lottery DApp – Final Fixed Version")
+st.title("🎲 Ethereum Lottery DApp – Final Corrected Version")
 
 # ----------------------------------------------------
 # Helper: checksum
@@ -23,7 +23,11 @@ MANAGER_ADDRESS = "0xf0c8bf5139cD5A7A0058A3854D769ac4CEC14eDa"
 contract_address = to_checksum(CONTRACT_ADDRESS)
 manager_address = to_checksum(MANAGER_ADDRESS)
 
-contract_abi = json.loads("""
+# ----------------------------------------------------
+# FIXED ABI (correctly closed triple quotes)
+# ----------------------------------------------------
+contract_abi = json.loads(
+"""
 [
     {
         "inputs": [],
@@ -37,20 +41,4 @@ contract_abi = json.loads("""
         "type": "receive"
     },
     {
-        "inputs": [],
-        "name": "getBalance",
-        "outputs": [
-            { "internalType": "uint256", "name": "", "type": "uint256" }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
-        "inputs": [],
-        "name": "manager",
-        "outputs": [
-            { "internalType": "address", "name": "", "type": "address" }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
+        "in
