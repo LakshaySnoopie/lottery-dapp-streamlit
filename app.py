@@ -4,6 +4,10 @@ import json
 
 st.title("🎲 Ethereum Lottery DApp")
 
+
+# -------------------------------------------
+#  CHECKSUM ADDRESS HELPER
+# -------------------------------------------
 def to_checksum(address):
     try:
         return Web3.to_checksum_address(address)
@@ -11,12 +15,15 @@ def to_checksum(address):
         st.error("❌ Invalid Ethereum address format")
         return None
 
--
+
+# -------------------------------------------
+#  CONTRACT DETAILS
+# -------------------------------------------
 contract_address_raw = "0x11d9966187C67E26838997C82a8Ca412De9f1f7e"
-manager_address_raw  = "0xf0c8bf5139cd5a7a0058a3854d769ac4cec14eda"
+manager_address_raw = "0xf0c8bf5139cd5a7a0058a3854d769ac4cec14eda"
 
 contract_address = to_checksum(contract_address_raw)
-manager_address  = to_checksum(manager_address_raw)
+manager_address = to_checksum(manager_address_raw)
 
 contract_abi = json.loads("""
 [
@@ -40,7 +47,11 @@ contract_abi = json.loads("""
         "inputs": [],
         "name": "getBalance",
         "outputs": [
-            {"internalType": "uint256", "name": "", "type": "uint256"}
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
         ],
         "stateMutability": "view",
         "type": "function"
@@ -49,18 +60,30 @@ contract_abi = json.loads("""
         "inputs": [],
         "name": "manager",
         "outputs": [
-            {"internalType": "address", "name": "", "type": "address"}
+            {
+                "internalType": "address",
+                "name": "",
+                "type": "address"
+            }
         ],
         "stateMutability": "view",
         "type": "function"
     },
     {
         "inputs": [
-            {"internalType": "uint256", "name": "", "type": "uint256"}
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
         ],
         "name": "participants",
         "outputs": [
-            {"internalType": "address payable", "name": "", "type": "address"}
+            {
+                "internalType": "address payable",
+                "name": "",
+                "type": "address"
+            }
         ],
         "stateMutability": "view",
         "type": "function"
@@ -69,7 +92,11 @@ contract_abi = json.loads("""
         "inputs": [],
         "name": "random",
         "outputs": [
-            {"internalType": "uint256", "name": "", "type": "uint256"}
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
+            }
         ],
         "stateMutability": "view",
         "type": "function"
@@ -77,6 +104,10 @@ contract_abi = json.loads("""
 ]
 """)
 
+
+# -------------------------------------------
+#  CONNECT TO SEPOLIA
+# -------------------------------------------
 infura_url = "https://sepolia.infura.io/v3/89de1fce9a0d4110bd998cbb27a9de87"
 web3 = Web3(Web3.HTTPProvider(infura_url))
 
@@ -85,8 +116,13 @@ if not web3.is_connected():
 else:
     st.success("✅ Connected to Sepolia")
 
+
 contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 
+
+# -------------------------------------------
+#  ENTER LOTTERY
+# -------------------------------------------
 st.header("🎟 Enter Lottery (Send 0.00001 ETH)")
 
 user_address_raw = st.text_input("Your wallet address")
@@ -117,6 +153,9 @@ if st.button("Enter Lottery"):
         st.warning("Enter your wallet address AND private key.")
 
 
+# -------------------------------------------
+#  MANAGER SELECT WINNER
+# -------------------------------------------
 st.header("🏆 Manager: Select Winner")
 
 if st.button("Select Winner"):
