@@ -38,7 +38,7 @@ def check_tx_on_sepolia(tx: str):
 # -----------------------
 # Config — fill these with your values
 # -----------------------
-CONTRACT_ADDRESS = "0xddaAd340b0f1Ef65169Ae5E41A8b10776a75482d"
+CONTRACT_ADDRESS = "0x7400F3846e752DBB83A2045A79538cBadBef12FE"
 MANAGER_ADDRESS = "0xf0c8bf5139cD5A7A0058A3854D769ac4CEC14eDa"
 INFURA_URL = "https://sepolia.infura.io/v3/89de1fce9a0d4110bd998cbb27a9de87"
 
@@ -198,4 +198,5 @@ if st.button("Check TX"):
             st.error(f"Error contacting Etherscan API: {e}")
 
 st.caption("Tip: If you deployed and interacted on Sepolia, verify transactions on https://sepolia.etherscan.io")
+
 
