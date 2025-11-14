@@ -2,7 +2,7 @@ import streamlit as st
 from web3 import Web3
 import json
 
-st.title("🎲 Ethereum Lottery DApp")
+st.title("🎲 Ethereum Lottery DApp (Sepolia)")
 
 
 # -------------------------------------------
@@ -12,7 +12,6 @@ def to_checksum(address):
     try:
         return Web3.to_checksum_address(address)
     except:
-        st.error("❌ Invalid Ethereum address format")
         return None
 
 
@@ -116,7 +115,6 @@ if not web3.is_connected():
 else:
     st.success("✅ Connected to Sepolia")
 
-
 contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 
 
@@ -125,13 +123,17 @@ contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 # -------------------------------------------
 st.header("🎟 Enter Lottery (Send 0.00001 ETH)")
 
-user_address_raw = st.text_input("Your wallet address")
-private_key = st.text_input("Private Key", type="password")
+user_address_raw = st.text_input("Your Wallet Address")
+user_private_key = st.text_input("Your Private Key", type="password")
 
 if st.button("Enter Lottery"):
     user_address = to_checksum(user_address_raw)
 
-    if user_address and private_key:
+    if not user_address:
+        st.error("❌ Invalid address")
+    elif not user_private_key:
+        st.error("❌ Enter private key")
+    else:
         try:
             txn = {
                 "from": user_address,
@@ -139,18 +141,17 @@ if st.button("Enter Lottery"):
                 "value": web3.to_wei(0.00001, "ether"),
                 "nonce": web3.eth.get_transaction_count(user_address),
                 "gas": 300000,
-                "gasPrice": web3.eth.gas_price
+                "gasPrice": web3.eth.gas_price,
+                "chainId": 11155111
             }
 
-            signed_txn = web3.eth.account.sign_transaction(txn, private_key)
-            tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
+            signed = web3.eth.account.sign_transaction(txn, user_private_key)
+            tx_hash = web3.eth.send_raw_transaction(signed.raw_transaction)
 
-            st.success(f"🎉 Entered Lottery! TX Hash:\n{tx_hash.hex()}")
+            st.success(f"🎉 You entered the lottery!\n\nTX: {tx_hash.hex()}")
 
         except Exception as e:
-            st.error(f"Error: {e}")
-    else:
-        st.warning("Enter your wallet address AND private key.")
+            st.error(f"❌ Error: {e}")
 
 
 # -------------------------------------------
@@ -158,24 +159,25 @@ if st.button("Enter Lottery"):
 # -------------------------------------------
 st.header("🏆 Manager: Select Winner")
 
+manager_private_key = st.text_input("Manager Private Key", type="password")
+
 if st.button("Select Winner"):
-    try:
-        txn = contract.functions.selectWinner().build_transaction({
-            "from": manager_address,
-            "nonce": web3.eth.get_transaction_count(manager_address),
-            "gas": 300000,
-            "gasPrice": web3.eth.gas_price
-        })
+    if not manager_private_key:
+        st.error("❌ Enter manager private key")
+    else:
+        try:
+            txn = contract.functions.selectWinner().build_transaction({
+                "from": manager_address,
+                "nonce": web3.eth.get_transaction_count(manager_address),
+                "gas": 300000,
+                "gasPrice": web3.eth.gas_price,
+                "chainId": 11155111
+            })
 
-        st.warning("⚠️ Enter manager PRIVATE KEY to confirm")
+            signed = web3.eth.account.sign_transaction(txn, manager_private_key)
+            tx_hash = web3.eth.send_raw_transaction(signed.raw_transaction)
 
-        manager_pk = st.text_input("Manager Private Key", type="password")
+            st.success(f"🏆 Winner selected!\n\nTX: {tx_hash.hex()}")
 
-        if manager_pk:
-            signed_txn = web3.eth.account.sign_transaction(txn, manager_pk)
-            tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
-
-            st.success(f"🏆 Winner Selected! TX Hash:\n{tx_hash.hex()}")
-
-    except Exception as e:
-        st.error(f"Error: {e}")
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
