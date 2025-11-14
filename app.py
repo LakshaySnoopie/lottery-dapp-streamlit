@@ -6,9 +6,7 @@ import re
 
 st.title("🎲 Ethereum Lottery DApp – Corrected Final Version")
 
-# -----------------------
-# Helpers
-# -----------------------
+
 def to_checksum(addr):
     try:
         return Web3.to_checksum_address(addr)
@@ -19,11 +17,11 @@ def is_valid_tx_hash(tx: str) -> bool:
     if not isinstance(tx, str):
         return False
     tx = tx.strip().lower()
-    # accept 64-hex or 0x + 64-hex
+    
     return bool(re.fullmatch(r"(0x)?[a-f0-9]{64}", tx))
 
 def check_tx_on_sepolia(tx: str):
-    # Ensure 0x prefix for etherscan API
+    
     tx_clean = tx.strip()
     if not tx_clean.startswith("0x"):
         tx_clean = "0x" + tx_clean
@@ -35,9 +33,7 @@ def check_tx_on_sepolia(tx: str):
     r = requests.get(url, timeout=10)
     return r.json()
 
-# -----------------------
-# Config — fill these with your values
-# -----------------------
+
 CONTRACT_ADDRESS = "0x8de587E7cae5003A087Cb51ea47408183E347388"
 MANAGER_ADDRESS = "0xf0c8bf5139cD5A7A0058A3854D769ac4CEC14eDa"
 INFURA_URL = "https://sepolia.infura.io/v3/89de1fce9a0d4110bd998cbb27a9de87"
@@ -45,9 +41,7 @@ INFURA_URL = "https://sepolia.infura.io/v3/89de1fce9a0d4110bd998cbb27a9de87"
 contract_address = to_checksum(CONTRACT_ADDRESS)
 manager_address = to_checksum(MANAGER_ADDRESS)
 
-# -----------------------
-# ABI as Python list (no triple quotes)
-# -----------------------
+
 contract_abi = [
     {"inputs": [], "name": "selectWinner", "outputs": [], "stateMutability": "nonpayable", "type": "function"},
     {"stateMutability": "payable", "type": "receive"},
@@ -57,9 +51,7 @@ contract_abi = [
     {"inputs": [], "name": "random", "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}], "stateMutability": "view", "type": "function"}
 ]
 
-# -----------------------
-# Connect to Sepolia
-# -----------------------
+
 web3 = Web3(Web3.HTTPProvider(INFURA_URL))
 if not web3.is_connected():
     st.error("❌ Could not connect to Sepolia RPC. Check INFURA_URL / Project ID.")
@@ -69,12 +61,10 @@ else:
 
 contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 
-# -----------------------
-# Contract Info
-# -----------------------
+
 st.subheader("📊 Contract Info")
 
-# Manager (on-chain)
+
 try:
     onchain_manager = contract.functions.manager().call()
     st.write(f"**On-chain manager:** `{onchain_manager}`")
@@ -82,21 +72,21 @@ except Exception as e:
     st.write("Could not read manager on-chain.")
     onchain_manager = None
 
-# Balance (manager-only getter - call with from)
+
 try:
     balance = contract.functions.getBalance().call({"from": manager_address})
     st.write(f"**Contract Balance:** {web3.from_wei(balance, 'ether')} ETH")
 except Exception:
     st.write("**Contract Balance:** (hidden — manager only or call failed)")
 
-# Random preview
+
 try:
     rand_val = contract.functions.random().call()
     st.write(f"**random() preview:** {rand_val}")
 except Exception:
     st.write("**random() preview:** (not available)")
 
-# Participants count (safe brute-force until revert)
+
 count = 0
 try:
     while True:
@@ -108,9 +98,7 @@ st.write(f"**Participants count:** {count}")
 
 st.markdown("---")
 
-# -----------------------
-# Enter Lottery
-# -----------------------
+
 st.header("🎟 Enter Lottery (0.00001 ETH)")
 
 user_addr_raw = st.text_input("Your wallet address (checksum or raw)")
@@ -140,9 +128,7 @@ if st.button("Enter Lottery"):
 
 st.markdown("---")
 
-# -----------------------
-# Manager: Select Winner (two-step)
-# -----------------------
+
 st.header("🏆 Manager: Select Winner")
 
 if st.button("Prepare Winner Transaction"):
@@ -175,9 +161,7 @@ if "winner_tx" in st.session_state:
 
 st.markdown("---")
 
-# -----------------------
-# Transaction verification (Sepolia)
-# -----------------------
+
 st.subheader("🔍 Verify a transaction on Sepolia")
 
 tx_input = st.text_input("Paste TX hash (with or without 0x)")
@@ -198,6 +182,7 @@ if st.button("Check TX"):
             st.error(f"Error contacting Etherscan API: {e}")
 
 st.caption("Tip: If you deployed and interacted on Sepolia, verify transactions on https://sepolia.etherscan.io")
+
 
 
 
