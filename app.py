@@ -2,8 +2,7 @@ import streamlit as st
 from web3 import Web3
 import json
 
-st.title("🎲 Ethereum Lottery DApp (Sepolia)")
-
+st.title("🎲 Ethereum Lottery DApp")
 
 # -------------------------------------------
 #  CHECKSUM ADDRESS HELPER
@@ -12,6 +11,7 @@ def to_checksum(address):
     try:
         return Web3.to_checksum_address(address)
     except:
+        st.error("❌ Invalid Ethereum address format")
         return None
 
 
@@ -115,6 +115,7 @@ if not web3.is_connected():
 else:
     st.success("✅ Connected to Sepolia")
 
+
 contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 
 
@@ -123,17 +124,13 @@ contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 # -------------------------------------------
 st.header("🎟 Enter Lottery (Send 0.00001 ETH)")
 
-user_address_raw = st.text_input("Your Wallet Address")
-user_private_key = st.text_input("Your Private Key", type="password")
+user_address_raw = st.text_input("Your wallet address")
+private_key = st.text_input("Private Key", type="password")
 
 if st.button("Enter Lottery"):
     user_address = to_checksum(user_address_raw)
 
-    if not user_address:
-        st.error("❌ Invalid address")
-    elif not user_private_key:
-        st.error("❌ Enter private key")
-    else:
+    if user_address and private_key:
         try:
             txn = {
                 "from": user_address,
@@ -141,43 +138,60 @@ if st.button("Enter Lottery"):
                 "value": web3.to_wei(0.00001, "ether"),
                 "nonce": web3.eth.get_transaction_count(user_address),
                 "gas": 300000,
-                "gasPrice": web3.eth.gas_price,
-                "chainId": 11155111
+                "gasPrice": web3.eth.gas_price
             }
 
-            signed = web3.eth.account.sign_transaction(txn, user_private_key)
-            tx_hash = web3.eth.send_raw_transaction(signed.raw_transaction)
+            signed_txn = web3.eth.account.sign_transaction(txn, private_key)
+            tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
 
-            st.success(f"🎉 You entered the lottery!\n\nTX: {tx_hash.hex()}")
+            st.success(f"🎉 Entered Lottery!\n\nTX Hash:\n{tx_hash.hex()}")
 
         except Exception as e:
-            st.error(f"❌ Error: {e}")
+            st.error(f"Error: {e}")
+    else:
+        st.warning("Enter your wallet address AND private key.")
+
 
 
 # -------------------------------------------
-#  MANAGER SELECT WINNER
+#  MANAGER SELECT WINNER (SESSION-STATE FIX)
 # -------------------------------------------
 st.header("🏆 Manager: Select Winner")
 
-manager_private_key = st.text_input("Manager Private Key", type="password")
+# Step 1: Build transaction
+if st.button("Prepare Winner Transaction"):
+    try:
+        winner_txn = contract.functions.selectWinner().build_transaction({
+            "from": manager_address,
+            "nonce": web3.eth.get_transaction_count(manager_address),
+            "gas": 300000,
+            "gasPrice": web3.eth.gas_price
+        })
 
-if st.button("Select Winner"):
-    if not manager_private_key:
-        st.error("❌ Enter manager private key")
-    else:
+        # save in session_state so rerender won't erase it
+        st.session_state["winner_txn"] = winner_txn
+        st.success("Transaction prepared! Now enter manager private key to send.")
+
+    except Exception as e:
+        st.error(f"Error preparing transaction: {e}")
+
+
+# Step 2: Sign & Send (persistent)
+if "winner_txn" in st.session_state:
+    manager_pk = st.text_input("Manager Private Key", type="password")
+
+    if st.button("Send Winner Transaction"):
         try:
-            txn = contract.functions.selectWinner().build_transaction({
-                "from": manager_address,
-                "nonce": web3.eth.get_transaction_count(manager_address),
-                "gas": 300000,
-                "gasPrice": web3.eth.gas_price,
-                "chainId": 11155111
-            })
+            signed_txn = web3.eth.account.sign_transaction(
+                st.session_state["winner_txn"],
+                manager_pk
+            )
+            tx_hash = web3.eth.send_raw_transaction(signed_txn.raw_transaction)
 
-            signed = web3.eth.account.sign_transaction(txn, manager_private_key)
-            tx_hash = web3.eth.send_raw_transaction(signed.raw_transaction)
+            st.success(f"🏆 Winner Selected!\n\nTX Hash:\n{tx_hash.hex()}")
 
-            st.success(f"🏆 Winner selected!\n\nTX: {tx_hash.hex()}")
+            # clear the stored txn
+            del st.session_state["winner_txn"]
 
         except Exception as e:
-            st.error(f"❌ Error: {e}")
+            st.error(f"Error sending: {e}")
