@@ -4,7 +4,7 @@ import json
 import requests
 import re
 
-st.title("🎲 Ethereum Lottery DApp – Corrected Final Version")
+st.title("🎲 Ethereum Lottery DApp")
 
 
 def to_checksum(addr):
@@ -182,6 +182,7 @@ if st.button("Check TX"):
             st.error(f"Error contacting Etherscan API: {e}")
 
 st.caption("Tip: If you deployed and interacted on Sepolia, verify transactions on https://sepolia.etherscan.io")
+
 
 
 
